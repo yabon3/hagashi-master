@@ -1,0 +1,382 @@
+:root {
+  --bg: #fff3f7;
+  --ink: #2b1b24;
+  --mute: #8a6f7d;
+  --accent: #ff3d8b;
+  --accent-soft: #ffd3e4;
+  --gold: #f5b700;
+  --good: #1fa36b;
+  --bad: #e5484d;
+  --late: #7a5cff;
+  --line: #f1c6d7;
+  --emoji: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* スマホは全面、PC は中央に縦長（9:16） */
+#app {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  width: min(100vw, calc(100dvh * 9 / 16));
+  background: var(--bg);
+  overflow: hidden;
+  container-type: size;
+  touch-action: manipulation;
+}
+
+.hidden { display: none !important; }
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 5cqw;
+}
+
+.k { color: var(--mute); font-size: 3.4cqw; }
+
+button {
+  font: inherit;
+  font-size: 4.2cqw;
+  color: var(--ink);
+  background: #fff;
+  border: 0.5cqw solid var(--line);
+  border-radius: 3cqw;
+  padding: 2.4cqw 3cqw;
+  cursor: pointer;
+}
+button:active { transform: translateY(0.3cqw); }
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ---------- タイトル ---------- */
+#title { align-items: stretch; justify-content: center; gap: 4cqw; }
+.logo {
+  margin: 0;
+  text-align: center;
+  font-size: 15cqw;
+  line-height: 1.05;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  text-shadow: 0.8cqw 0.8cqw 0 var(--accent-soft);
+}
+.sub { margin: -2cqw 0 3cqw; text-align: center; color: var(--mute); font-size: 4cqw; }
+.field { display: flex; flex-direction: column; gap: 1.5cqw; }
+.seg { display: flex; gap: 2cqw; }
+.seg button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5cqw; }
+.seg button small { font-size: 3cqw; color: var(--mute); }
+.seg button.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
+.wide { width: 100%; font-variant-numeric: tabular-nums; }
+.best { text-align: center; font-size: 4.2cqw; color: var(--mute); }
+.best b { color: var(--ink); font-size: 6cqw; margin-left: 2cqw; font-variant-numeric: tabular-nums; }
+.best .mini { margin-left: 3cqw; font-size: 3.2cqw; padding: 1cqw 2.5cqw; vertical-align: 0.6cqw; }
+#btnStart { font-size: 6cqw; padding: 3.5cqw; }
+.ops { text-align: center; color: var(--mute); font-size: 3.4cqw; }
+
+/* ---------- プレイ ---------- */
+#play { padding: 3cqw 4cqw 4cqw; gap: 2cqw; cursor: pointer; }
+.hud { display: flex; justify-content: space-between; }
+.hud > div { display: flex; flex-direction: column; align-items: center; min-width: 20cqw; }
+.hud b { font-size: 6.5cqw; font-variant-numeric: tabular-nums; }
+.meters { display: flex; gap: 4cqw; }
+.meter { flex: 1; display: flex; align-items: center; gap: 2cqw; }
+.bar { flex: 1; height: 2.4cqw; background: #fff; border-radius: 2cqw; overflow: hidden; border: 0.3cqw solid var(--line); }
+.bar i { display: block; height: 100%; width: 70%; background: var(--late); transition: width .3s; }
+.bar.fanbar i { background: var(--gold); }
+
+.stage {
+  position: relative;
+  flex: 1;
+  border-radius: 4cqw;
+  background: #fff;
+  overflow: hidden;
+}
+.face { font-family: var(--emoji); line-height: 1; }
+
+.idol {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.idol-img { display: block; height: 30cqw; width: auto; }
+.plate {
+  position: relative;
+  z-index: 1;
+  margin-top: -2cqw;
+  padding: 0.5cqw 3cqw;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 5cqw;
+  font-size: 3.4cqw;
+  font-weight: 700;
+}
+/* 本音マーク（顔は笑顔のまま、気持ちはここに出す） */
+.marks {
+  position: absolute;
+  top: 0;
+  left: -9cqw;  /* 右はアイドルの台詞が出るので左に置く */
+  font-family: var(--emoji);
+  font-size: 10cqw;
+  line-height: 1;
+  animation: marks-pop .6s ease-in-out infinite alternate;
+}
+@keyframes marks-pop { from { transform: scale(.9) rotate(-8deg); } to { transform: scale(1.1) rotate(8deg); } }
+.table {
+  position: absolute;
+  left: 0; right: 0;
+  top: 34%;
+  height: 2cqw;
+  background: var(--accent-soft);
+}
+
+.hand {
+  position: absolute;
+  left: 50%;
+  font-family: var(--emoji);
+  font-size: 15cqw;
+  line-height: 1;
+}
+.idol-hand { top: 35%; transform: translate(-50%, 0) rotate(180deg); }
+/* --p: 0 = 手前、1 = 握手の位置 */
+.fan-hand { top: calc(61% - var(--p, 0) * 16%); transform: translate(-50%, 0); }
+.shake {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, 0);
+  font-family: var(--emoji);
+  font-size: 22cqw;
+  line-height: 1;
+}
+
+.fan {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 3%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 2cqw;
+  transition: transform .45s ease-out, opacity .45s;
+}
+.fan .face { font-size: 20cqw; }
+.fan.enter { transform: translate(0, 60%); opacity: 0; transition: none; }
+.fan.out { transform: translate(100%, 0) rotate(12deg); opacity: 0; transition: transform .4s ease-in, opacity .4s ease-in; }
+/* 判定のあと：券は使い終わり、ファンは暗幕より手前で台詞を言う */
+.fan.talking { z-index: 6; }
+.fan.talking .tickets { visibility: hidden; }
+.fan.boss .face { font-size: 26cqw; }
+
+.tickets {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5cqw;
+  margin-bottom: 2cqw;
+}
+.tickets .icons { display: grid; justify-content: end; gap: 0.6cqw 0.4cqw; font-family: var(--emoji); font-size: 6cqw; line-height: 1.1; }
+.tickets .icons i { font-style: normal; }
+.tickets .sec { white-space: nowrap; font-size: 10cqw; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.tickets .tag { font-size: 3.2cqw; background: var(--gold); color: #fff; padding: 0.3cqw 2cqw; border-radius: 3cqw; font-weight: 700; }
+
+.bubble {
+  position: absolute;
+  max-width: 48cqw;
+  padding: 2cqw 3cqw;
+  background: #fff;
+  border: 0.5cqw solid var(--ink);
+  border-radius: 3cqw;
+  font-size: 3.8cqw;
+  font-weight: 700;
+  line-height: 1.35;
+}
+/* 台詞は話す人の横。しっぽを話す人の側に出す */
+.idol-bubble { top: 5%; left: calc(50% + 19cqw); right: 2%; }
+.who { position: relative; }
+.fan-bubble { bottom: 25%; right: calc(100% + 2.5cqw); width: max-content; max-width: 36cqw; }
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 2.4cqw;
+  height: 2.4cqw;
+  background: #fff;
+  border: solid var(--ink);
+  border-width: 0 0 0.5cqw 0.5cqw;
+  transform: translateY(-50%) rotate(45deg);
+}
+.idol-bubble::after { left: -1.5cqw; }
+.fan-bubble::after { right: -1.5cqw; transform: translateY(-50%) rotate(-135deg); }
+
+.judge {
+  position: absolute;
+  left: 0; right: 0;
+  top: 48%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+  pointer-events: none;
+}
+.jword { font-size: 11cqw; font-weight: 900; letter-spacing: 0.04em; }
+.jword.perfect { color: var(--accent); }
+.jword.good { color: var(--good); }
+.jword.early { color: var(--gold); }
+.jword.late { color: var(--late); }
+.watch {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 3cqw;
+  padding: 1.5cqw 5cqw;
+  text-align: center;
+  font-family: "Consolas", "Menlo", monospace;
+  font-variant-numeric: tabular-nums;
+}
+.watch-main { font-size: 10cqw; font-weight: 700; }
+.watch-sub { display: flex; gap: 4cqw; justify-content: center; font-size: 4cqw; opacity: .85; }
+
+/* 握手中のストップウォッチ（設定で表示） */
+.sw-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(43, 27, 36, .35);
+  pointer-events: none;
+}
+/* アイドルの下から券の上までに収める（top / bottom は game.js が握手ごとに入れる） */
+.sw-box {
+  position: absolute;
+  left: 0; right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+}
+.sw-clock { flex: 1 1 0; min-height: 0; width: 100%; max-width: 82%; display: block; }
+.sw-word {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  white-space: nowrap;
+  padding: 0 3cqw;
+  border-radius: 3cqw;
+  background: #fff;
+  box-shadow: 0 0.5cqw 1.5cqw rgba(0, 0, 0, .25);
+}
+.sw-word:empty { display: none; }
+.sw-dig {
+  font-family: "Consolas", "Menlo", monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 17cqw;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0.5cqw 1.2cqw rgba(0, 0, 0, .45);
+}
+.sw-diff { min-height: 1.2em; font-family: "Consolas", "Menlo", monospace; font-size: 5cqw; color: #fff; white-space: pre; }
+.bubble { z-index: 6; }
+
+/* ---------- 担当アイドル ---------- */
+#select { gap: 3cqw; }
+.sel-head { margin: 0; text-align: center; font-size: 7cqw; color: var(--accent); }
+.idol-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3cqw; }
+.idol-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 2cqw 5cqw 0 3cqw;
+  overflow: hidden;
+  border-color: var(--member);
+}
+.idol-card img { height: 100%; max-height: 42cqw; width: auto; }
+.idol-name { align-self: center; font-size: 9cqw; font-weight: 700; color: var(--member); }
+.idol-card.on { background: #fff8fb; }
+
+/* ---------- 結果 ---------- */
+#result { gap: 2.5cqw; }
+.res-head { margin: 0; text-align: center; font-size: 6cqw; color: var(--accent); }
+.res-score { display: flex; align-items: baseline; justify-content: center; gap: 3cqw; }
+.res-score b { font-size: 12cqw; font-variant-numeric: tabular-nums; }
+.newbest { font-size: 3.4cqw; background: var(--gold); color: #fff; padding: 0.5cqw 2cqw; border-radius: 3cqw; font-weight: 700; }
+.res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5cqw 4cqw; }
+.res-grid > div { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.3cqw solid var(--line); padding-bottom: 0.8cqw; }
+.res-grid b { font-size: 4.6cqw; font-variant-numeric: tabular-nums; }
+.res-idol { display: flex; align-items: center; gap: 3cqw; background: #fff; border-radius: 3cqw; padding: 2cqw 3cqw; }
+/* 結果画面は顔のアップだけ。3人の絵は共通の枠（art/make_idols.py）なので、顔の範囲も共通でよい。
+   元の絵（1024px）での顔の範囲：x 270〜750、y 170〜650 → 画像に対する割合に直して --d（丸の直径）から位置を出す */
+.res-face {
+  --d: 15.4cqw;
+  position: relative;
+  flex-shrink: 0;
+  width: var(--d);
+  height: var(--d);
+  box-sizing: content-box;
+  border: 0.8cqw solid var(--member, #ff5c8a);
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fff;
+}
+.res-face img {
+  position: absolute;
+  max-width: none;
+  width: calc(var(--d) / 0.46875);
+  left: calc(var(--d) * -0.5626);
+  top: calc(var(--d) * -0.300);
+}
+.res-who { display: flex; align-items: flex-start; gap: 1cqw; flex-shrink: 0; }
+.res-who .marks { position: static; font-size: 6cqw; animation: none; }
+.res-line { font-size: 4.2cqw; font-weight: 700; }
+.res-table-wrap { flex: 1; min-height: 0; overflow-y: auto; background: #fff; border-radius: 3cqw; }
+.res-table { width: 100%; border-collapse: collapse; font-size: 3.6cqw; font-variant-numeric: tabular-nums; }
+.res-table th { position: sticky; top: 0; background: #fff; color: var(--mute); font-weight: 400; padding: 1.2cqw; }
+.res-table td { text-align: center; padding: 1cqw; border-top: 0.2cqw solid var(--line); }
+.res-table td.perfect { color: var(--accent); font-weight: 700; }
+.res-table td.good { color: var(--good); }
+.res-table td.early { color: var(--gold); }
+.res-table td.late { color: var(--late); }
+.row { display: flex; gap: 2cqw; }
+/* C案のボタンは縁取りと影で上下にはみ出すので、段の間をあける */
+#result .row + .row { margin-top: 2.5cqw; }
+.row button { flex: 1; }
+
+/* ---------- タイミング調整 ---------- */
+#calib { gap: 3cqw; cursor: pointer; }
+.calib-note { margin: 0; text-align: center; font-size: 4.6cqw; }
+.calib-stage { position: relative; flex: 1; background: #fff; border-radius: 4cqw; overflow: hidden; }
+.calib-stage .idol-hand { top: 18%; }
+.calib-stage .fan-hand { top: calc(70% - var(--p, 0) * 44%); }
+.calib-stage .shake { top: 22%; }
+.calib-count { text-align: center; font-size: 5cqw; font-variant-numeric: tabular-nums; }
+.calib-result { text-align: center; font-size: 5cqw; font-weight: 700; color: var(--accent); min-height: 7cqw; font-variant-numeric: tabular-nums; }

@@ -1,0 +1,87 @@
+/* 見た目：リボンとストライプ（2026-09-28 に見本3案からC案に決定）。style.css の上に重ねる */
+@import url('https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&family=Kiwi+Maru:wght@500&display=swap');
+
+:root {
+  --bg: #fff5f8;
+  --ink: #6b2d4a;
+  --mute: #b07a92;
+  --accent: #ff5c8a;
+  --accent-soft: #ffe0ea;
+  --line: #ffb6cb;
+  --gold: #ffb020;
+  --late: #6f8dff;
+  --good: #2fb58a;
+}
+
+body { font-family: "Kiwi Maru", "Yu Gothic UI", serif; }
+
+#app { background: repeating-linear-gradient(135deg, #ffe0ea 0 5cqw, #fff5f8 5cqw 10cqw); }
+#app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, .9) 0 1cqw, transparent 1.1cqw);
+  background-size: 12cqw 12cqw;
+  background-position: 3cqw 3cqw;
+}
+.screen { z-index: 1; }
+
+.logo {
+  font-family: "Hachi Maru Pop", cursive;
+  color: #ff5c8a;
+  text-shadow:
+    0.7cqw 0 0 #fff, -0.7cqw 0 0 #fff, 0 0.7cqw 0 #fff, 0 -0.7cqw 0 #fff,
+    0.5cqw 0.5cqw 0 #fff, -0.5cqw -0.5cqw 0 #fff, 0.5cqw -0.5cqw 0 #fff, -0.5cqw 0.5cqw 0 #fff,
+    1.2cqw 1.6cqw 0 #8fe3cf;
+}
+/* サブタイトルをリボンに */
+.sub {
+  align-self: center;
+  color: #fff;
+  background: #ff5c8a;
+  padding: 1.2cqw 9cqw;
+  clip-path: polygon(0 0, 100% 0, 94% 50%, 100% 100%, 0 100%, 6% 50%);
+}
+.k { color: #b07a92; }
+
+/* 手縫いのステッチ */
+button {
+  background: #fff;
+  border: 0.5cqw dashed #ffb6cb;
+  border-radius: 4cqw;
+  box-shadow: 0 0 0 0.9cqw #fff, 0 1.4cqw 0 0.9cqw #ffd0de;
+}
+button.primary {
+  background: #ff5c8a;
+  border-color: rgba(255, 255, 255, .85);
+  box-shadow: 0 0 0 0.9cqw #ff5c8a, 0 1.4cqw 0 0.9cqw #d93d6c;
+}
+.seg button.on { background: #fff0f5; border-color: #ff5c8a; color: #ff3d74; }
+
+.stage {
+  background: #fff;
+  border: 0.5cqw dashed #ffb6cb;
+  box-shadow: 0 0 0 1.4cqw #fff, 0 0 0 2.2cqw #ff5c8a;
+  margin: 2.4cqw;
+}
+.hud b { color: #ff5c8a; }
+.plate {
+  background: var(--member, #ff5c8a);
+  border-radius: 0;
+  padding: 0.5cqw 5cqw;
+  clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%, 8% 50%);
+}
+/* ギンガムチェックのテーブルクロス */
+.table {
+  height: 3cqw;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 92, 138, .45) 0 2cqw, transparent 2cqw 4cqw),
+    repeating-linear-gradient(0deg, rgba(255, 92, 138, .45) 0 1.5cqw, transparent 1.5cqw 3cqw),
+    #fff;
+}
+.bubble { border-color: #ff5c8a; border-style: dashed; }
+.bubble::after { border-color: #ff5c8a; }
+.sw-layer { background: rgba(107, 45, 74, .35); }
+.sw-word { border: 0.5cqw dashed #ff5c8a; }
+.watch { background: #6b2d4a; }

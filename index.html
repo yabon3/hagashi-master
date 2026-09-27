@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>はがしの達人</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- タイトル -->
+  <section id="title" class="screen">
+    <h1 class="logo">はがしの<br>達人</h1>
+    <p class="sub">〜握手会の0.01秒〜</p>
+
+    <div class="field">
+      <div class="k">難易度</div>
+      <div class="seg" id="segDiff">
+        <button data-v="easy">イージー<small>±0.15秒</small></button>
+        <button data-v="normal">ノーマル<small>±0.10秒</small></button>
+        <button data-v="hard">ハード<small>±0.05秒</small></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="k">ストップウォッチ</div>
+      <div class="seg" id="segWatch">
+        <button data-v="1">表示</button>
+        <button data-v="0">非表示</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="k">タイミング調整</div>
+      <button class="wide" id="btnCalib"><span id="offsetLabel">±0.000秒</span></button>
+    </div>
+
+    <div class="best">ハイスコア <b id="bestLabel">0</b><button class="mini" id="btnClearBest">クリア</button></div>
+
+    <button class="primary" id="btnStart">スタート</button>
+    <div class="ops">スペース / タップ</div>
+  </section>
+
+  <!-- 担当アイドル -->
+  <section id="select" class="screen hidden">
+    <h2 class="sel-head">担当アイドル</h2>
+    <div class="idol-list" id="idolList"></div>
+    <button id="btnSelectBack">戻る</button>
+  </section>
+
+  <!-- プレイ -->
+  <section id="play" class="screen hidden">
+    <header class="hud">
+      <div><span class="k">残り</span><b id="hudLeft">10</b></div>
+      <div><span class="k">スコア</span><b id="hudScore">0</b></div>
+      <div><span class="k">連続</span><b id="hudCombo">0</b></div>
+    </header>
+    <div class="meters">
+      <div class="meter"><span class="k">機嫌</span><div class="bar"><i id="barIdol"></i></div></div>
+      <div class="meter"><span class="k">ファン</span><div class="bar fanbar"><i id="barFan"></i></div></div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="idol" id="idol">
+        <img class="idol-img" id="idolImg" alt="">
+        <div class="marks hidden" id="idolMarks"></div>
+        <div class="plate" id="idolPlate"></div>
+      </div>
+      <div class="bubble idol-bubble hidden" id="bubbleIdol"></div>
+      <div class="table"></div>
+
+      <div class="hand idol-hand" id="idolHand">✋</div>
+      <div class="hand fan-hand" id="fanHand">✋</div>
+      <div class="shake hidden" id="shake">🤝</div>
+
+      <div class="judge hidden" id="judge">
+        <div class="jword" id="jword"></div>
+        <div class="watch" id="watch">
+          <div class="watch-main" id="watchMain">0.00</div>
+          <div class="watch-sub"><span id="watchTarget">/ 0.00</span><span id="watchDiff">±0.00</span></div>
+        </div>
+      </div>
+
+      <div class="fan" id="fan">
+        <div class="tickets" id="tickets"></div>
+        <div class="who">
+          <div class="face" id="fanFace">🧑</div>
+          <div class="bubble fan-bubble hidden" id="bubbleFan"></div>
+        </div>
+      </div>
+
+      <div class="sw-layer hidden" id="swLayer">
+       <div class="sw-box" id="swBox">
+        <div class="sw-word jword" id="swWord"></div>
+        <svg class="sw-clock" viewBox="-100 -100 200 200">
+          <circle r="96" fill="#fff" fill-opacity=".92" stroke="#2b1b24" stroke-width="4"/>
+          <path id="swPie" d="" fill="#ff3d8b" fill-opacity=".35"/>
+          <g id="swTicks" stroke="#2b1b24" stroke-linecap="round"></g>
+          <line id="swNeedle" x1="0" y1="14" x2="0" y2="-84" stroke="#e5484d" stroke-width="4" stroke-linecap="round"/>
+          <circle r="6" fill="#2b1b24"/>
+        </svg>
+        <div class="sw-dig" id="swDig">0.00</div>
+        <div class="sw-diff" id="swDiff"></div>
+       </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="screen hidden">
+    <h2 class="res-head">本日の握手会 終了</h2>
+    <div class="res-score"><span class="k">スコア</span><b id="resScore">0</b><span class="newbest hidden" id="resNew">ハイスコア更新</span></div>
+    <div class="res-grid">
+      <div><span class="k">ピッタリ</span><b id="resPerfect">0/10</b></div>
+      <div><span class="k">最大連続</span><b id="resCombo">0</b></div>
+      <div><span class="k">売上</span><b id="resSales">¥0</b></div>
+      <div><span class="k">新規ファン</span><b id="resFans">+0</b></div>
+      <div><span class="k">平均のずれ</span><b id="resMean">±0.00秒</b></div>
+      <div><span class="k">ばらつき</span><b id="resSpread">0.00秒</b></div>
+    </div>
+    <div class="res-idol"><span class="res-who"><span class="res-face" id="resFace"><img id="resImg" alt=""></span><span class="marks hidden" id="resMarks"></span></span><span class="res-line" id="resLine"></span></div>
+    <div class="res-table-wrap">
+      <table class="res-table">
+        <thead><tr><th>#</th><th>目標</th><th>押した</th><th>差</th><th></th></tr></thead>
+        <tbody id="resRows"></tbody>
+      </table>
+    </div>
+    <div class="row">
+      <button class="primary" id="btnAgain">もう一度</button>
+    </div>
+    <div class="row">
+      <button id="btnToTitle">タイトル</button>
+      <button id="btnCopy">記録をコピー</button>
+    </div>
+  </section>
+
+  <!-- タイミング調整 -->
+  <section id="calib" class="screen hidden">
+    <h2 class="res-head">タイミング調整</h2>
+    <p class="calib-note">🤝 の瞬間に押す</p>
+    <div class="calib-stage" id="calibStage">
+      <div class="hand idol-hand" id="calibIdolHand">✋</div>
+      <div class="hand fan-hand" id="calibHand">✋</div>
+      <div class="shake hidden" id="calibShake">🤝</div>
+    </div>
+    <div class="calib-count" id="calibCount">0 / 12</div>
+    <div class="calib-result" id="calibResult">&nbsp;</div>
+    <div class="row">
+      <button id="calibRetry">やり直し</button>
+      <button id="calibReset">0に戻す</button>
+      <button class="primary" id="calibDone">戻る</button>
+    </div>
+  </section>
+
+</div>
+<script src="game.js"></script>
+</body>
+</html>
