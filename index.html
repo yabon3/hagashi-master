@@ -37,6 +37,7 @@
       <button class="wide" id="btnCalib"><span id="offsetLabel">±0.000秒</span></button>
     </div>
 
+    <div class="best-cond" id="bestCond"></div>
     <div class="best">ハイスコア <b id="bestLabel">0</b><button class="mini" id="btnClearBest">クリア</button></div>
 
     <button class="primary" id="btnStart">スタート</button>
@@ -111,6 +112,7 @@
   <!-- 結果 -->
   <section id="result" class="screen hidden">
     <h2 class="res-head">本日の握手会 終了</h2>
+    <div class="res-cond" id="resCond"></div>
     <div class="res-score"><span class="k">スコア</span><b id="resScore">0</b><span class="newbest hidden" id="resNew">ハイスコア更新</span></div>
     <div class="res-grid">
       <div><span class="k">ピッタリ</span><b id="resPerfect">0/10</b></div>
@@ -130,9 +132,10 @@
     <div class="row">
       <button class="primary" id="btnAgain">もう一度</button>
     </div>
-    <div class="row">
-      <button id="btnToTitle">タイトル</button>
-      <button id="btnCopy">記録をコピー</button>
+    <div class="row icon-row">
+      <button id="btnToTitle" title="タイトル" aria-label="タイトル"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg></button>
+      <button id="btnShare" title="結果をシェア" aria-label="結果をシェア"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg></button>
+      <button id="btnCopy" title="記録をコピー" aria-label="記録をコピー"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg></button>
     </div>
   </section>
 

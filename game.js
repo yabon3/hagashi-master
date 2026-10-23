@@ -3,10 +3,11 @@
 // ===== 設定 =====
 // 判定の幅は秒数で固定。1秒でも10秒でも、ずれの大きさはほぼ同じだった（2026-09-27 の試し打ち）
 const DIFFS = {
-  easy:   { tol: 0.15 },
-  normal: { tol: 0.10 },
-  hard:   { tol: 0.05 },
+  easy:   { tol: 0.15, name: 'イージー' },
+  normal: { tol: 0.10, name: 'ノーマル' },
+  hard:   { tol: 0.05, name: 'ハード' },
 };
+const SHARE_URL = 'https://yabon3.github.io/hagashi-master/';
 const REGULAR = [1, 1, 2, 2, 3, 3, 4, 4, 5]; // 並びは毎回シャッフル。合計は固定（太客と合わせて10人）
 const BOSS = 10;                                             // 最後の1人（太客）
 const YEN_PER_TICKET = 1000;
@@ -17,23 +18,47 @@ const T_TALK = 1600;     // 判定と台詞を見せる（ファンはその場�
 const T_LEAVE = 400;     // ファンが台詞ごとはけていく
 
 // 担当アイドル。絵は Flow で生成（art/ に元画像とプロンプト）
+// 性格の違いは台詞と機嫌の動き方だけ。スコアはタイミングだけで決まるので、誰で遊んでも比べられる（2026-10-23）
+//   up＝ピッタリで機嫌が上がる倍率、down＝遅れで下がる倍率
+//   result＝結果画面の一言（機嫌 85以上／65以上／45以上／25以上／それ未満）
 const IDOLS = [
-  { id: 'red',    name: 'あいり', color: '#ff4d6d', img: 'img/idol-red.webp' },
-  { id: 'blue',   name: 'みお',   color: '#4d8dff', img: 'img/idol-blue.webp' },
-  { id: 'yellow', name: 'ひなた', color: '#f5a300', img: 'img/idol-yellow.webp' },
+  { id: 'janako', name: 'じゃな子', color: '#5441ce', img: 'img/idol-janako.webp',
+    up: 1, down: 0.5, // 遅れに寛容
+    lines: {
+      perfect: ['ありがとね！', 'また来なよ〜！', 'はい次〜！'],
+      goodLate: ['（ま、いっか）', '（長いけど許す）'],
+      badLate: ['おーい、剥がしさん？', 'ちょ、長くない？', '（ストレッチしとこ）'],
+      timeout: ['ねえ！交代して！', '（屈伸を始めた）'],
+      result: ['最高のチームワーク！', 'おつかれっす！', 'まあまあかな〜', 'もうちょい気合い！', '……走り込みからだね'],
+    } },
+  { id: 'kanmi', name: '寒美', color: '#6b80f2', img: 'img/idol-kanmi.webp',
+    up: 0.5, down: 0.5, // なかなか動かない
+    lines: {
+      perfect: ['……ありがと', 'また、来て', '……ふふ'],
+      goodLate: ['（……長い）', '（……）'],
+      badLate: ['……剥がして', '……まだ？', '（視線が冷たい）'],
+      timeout: ['……剥がし', '（室温が下がった）'],
+      result: ['……悪くなかった', '……おつかれさま', '……そう', '……（目を合わせない）', '……次は、ないから'],
+    } },
+  { id: 'shibakoma', name: 'しばこま', color: '#e6b000', img: 'img/idol-shibakoma.webp',
+    up: 1.5, down: 1.5, // 一喜一憂
+    lines: {
+      perfect: ['わん！ありがと〜！', 'また来てね、わん！', '（しっぽぶんぶん）'],
+      goodLate: ['（くぅ〜ん）', '（ちょっと長いわん）'],
+      badLate: ['わぅ…剥がして〜', 'う〜…まだ？', '（しっぽが下がった）'],
+      timeout: ['ワン！ワン！！', '（うなり声）'],
+      result: ['今日の剥がしさん、だいすき！', 'おつかれさまわん！', 'う〜ん、ふつう？', '……（ふて寝した）', 'がるる……'],
+    } },
 ];
 
 const FAN_FACES = ['🧑', '👨', '👩', '🧔', '👱', '🧓', '👴', '👦', '👧', '👵'];
 const BOSS_FACE = '🤵';
 
+// ファンの台詞（アイドルの台詞は IDOLS の lines）
 const LINES = {
   perfectFan:  ['最高の{s}秒でした…', '一生の思い出です', 'また来ます！！', '神対応…'],
-  perfectIdol: ['ありがとう〜♡', 'また来てね！', 'うれしい〜！'],
   goodEarly:   ['あれ、もう？', 'もうちょっとだけ…'],
-  goodLate:    ['（ちょっと長いかも）', '（手、あったかいね…）'],
   badEarly:    ['えっ、まだ{r}秒あるんだけど！？', '券、返して！', '運営に言うからな！'],
-  badLate:     ['……剥がして？', '（笑顔がひきつる）', 'ちょっと、剥がしさん？'],
-  timeout:     ['ねえ、剥がし！！', '（アイドル、真顔）'],
 };
 
 // ===== 保存（使えなくても動く） =====
@@ -41,10 +66,13 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 保存できなくても続行 */ } },
 };
-const settings = Object.assign({ diff: 'easy', showWatch: true, offset: 0, idol: 'red' }, store.get('hagashi.settings', {}));
+const settings = Object.assign({ diff: 'easy', showWatch: true, offset: 0, idol: 'janako' }, store.get('hagashi.settings', {}));
 const curIdol = () => IDOLS.find((d) => d.id === settings.idol) || IDOLS[0];
 const saveSettings = () => store.set('hagashi.settings', settings);
-const bestKey = () => 'hagashi.best.' + settings.diff;
+// ハイスコアは難易度×時計あり／なしで分ける（2026-10-23。人と比べるとき、時計ありが勝ってしまうため）。
+// 分ける前の記録は時計ありのキーに残す（当時の既定は時計あり）
+const bestKey = () => 'hagashi.best.' + settings.diff + (settings.showWatch ? '' : '.nowatch');
+const condLabel = () => DIFFS[settings.diff].name + '・時計' + (settings.showWatch ? 'あり' : 'なし');
 
 // ===== 小道具 =====
 const $ = (id) => document.getElementById(id);
@@ -83,6 +111,7 @@ function refreshTitle() {
   for (const b of $('segWatch').children) b.classList.toggle('on', (b.dataset.v === '1') === settings.showWatch);
   $('offsetLabel').textContent = (settings.offset >= 0 ? '+' : '−') + Math.abs(settings.offset / 1000).toFixed(3) + '秒';
   $('bestLabel').textContent = store.get(bestKey(), 0);
+  $('bestCond').textContent = condLabel();
 }
 $('segDiff').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
@@ -282,33 +311,35 @@ function resolve(pressTime) {
   }
 
   let pts = 0, word, cls, idolLine = null, fanLine = null;
+  const d = curIdol();
+  const up = (v) => Math.round(v * d.up), down = (v) => Math.round(v * d.down);
   switch (j.rank) {
     case 'perfect':
       pts = (100 + Math.round(50 * (1 - Math.abs(j.err) / j.tol)) + G.combo * 10) * mult;
       G.combo++;
-      G.idol += 6; G.fan += 6;
+      G.idol += up(6); G.fan += 6;
       word = 'ピッタリ！'; cls = 'perfect';
-      if (Math.random() < 0.5) fanLine = pick(LINES.perfectFan); else idolLine = pick(LINES.perfectIdol);
+      if (Math.random() < 0.5) fanLine = pick(LINES.perfectFan); else idolLine = pick(d.lines.perfect);
       break;
     case 'goodEarly':
       pts = 40 * mult; G.combo = 0; G.fan -= 5;
       word = 'ちょい早'; cls = 'early'; fanLine = pick(LINES.goodEarly);
       break;
     case 'goodLate':
-      pts = 40 * mult; G.combo = 0; G.idol -= 5;
-      word = 'ちょい遅'; cls = 'late'; idolLine = pick(LINES.goodLate);
+      pts = 40 * mult; G.combo = 0; G.idol -= down(5);
+      word = 'ちょい遅'; cls = 'late'; idolLine = pick(d.lines.goodLate);
       break;
     case 'badEarly':
       G.combo = 0; G.fan -= 15 * mult;
       word = '早すぎ！'; cls = 'early'; fanLine = pick(LINES.badEarly);
       break;
     case 'badLate':
-      G.combo = 0; G.idol -= 15 * mult;
-      word = '遅すぎ！'; cls = 'late'; idolLine = pick(LINES.badLate);
+      G.combo = 0; G.idol -= down(15 * mult);
+      word = '遅すぎ！'; cls = 'late'; idolLine = pick(d.lines.badLate);
       break;
     case 'timeout':
-      G.combo = 0; G.idol -= 25 * mult;
-      word = '剥がして！'; cls = 'late'; idolLine = pick(LINES.timeout);
+      G.combo = 0; G.idol -= down(25 * mult);
+      word = '剥がして！'; cls = 'late'; idolLine = pick(d.lines.timeout);
       break;
   }
   G.idol = clamp(G.idol, 0, 100);
@@ -385,11 +416,13 @@ function finish() {
   const mean = errs.length ? errs.reduce((a, b) => a + b, 0) / errs.length : 0;
   const sd = errs.length > 1 ? Math.sqrt(errs.reduce((a, b) => a + (b - mean) ** 2, 0) / (errs.length - 1)) : 0;
 
+  G.res = { perfects, n: log.length, mean };
   const best = store.get(bestKey(), 0);
   const isNew = G.score > best;
   if (isNew) store.set(bestKey(), G.score);
 
   $('resScore').textContent = G.score;
+  $('resCond').textContent = condLabel();
   $('resNew').classList.toggle('hidden', !isNew);
   $('resPerfect').textContent = perfects + '/' + log.length;
   $('resCombo').textContent = G.maxCombo;
@@ -398,12 +431,7 @@ function finish() {
   $('resMean').textContent = sgn2(mean) + '秒';
   $('resSpread').textContent = sd.toFixed(2) + '秒';
   showMarks($('resMarks'), G.idol);
-  $('resLine').textContent =
-    G.idol >= 85 ? '今日の剥がしさん、最高！' :
-    G.idol >= 65 ? 'おつかれさま〜' :
-    G.idol >= 45 ? 'まあ、こんなもんかな' :
-    G.idol >= 25 ? '……（無言で帰った）' :
-    '剥がし、変えてもらえます？';
+  $('resLine').textContent = curIdol().lines.result[G.idol >= 85 ? 0 : G.idol >= 65 ? 1 : G.idol >= 45 ? 2 : G.idol >= 25 ? 3 : 4];
 
   $('resRows').innerHTML = log.map((r) =>
     '<tr><td>' + r.n + '</td><td>' + f2(r.target) + '</td><td>' +
@@ -416,13 +444,37 @@ function finish() {
 
 function copyLog() {
   if (!G) return;
-  const head = '難易度\t' + settings.diff + '\t調整\t' + (settings.offset / 1000).toFixed(3) + '\tスコア\t' + G.score;
+  const head = '難易度\t' + settings.diff + '\t時計\t' + (settings.showWatch ? 'あり' : 'なし') + '\t調整\t' + (settings.offset / 1000).toFixed(3) + '\tスコア\t' + G.score;
   const rows = G.log.map((r) => [r.n, r.target, r.elapsed === null ? '' : r.elapsed.toFixed(3), r.err === null ? '' : r.err.toFixed(3), r.word].join('\t'));
   const text = [head, '#\t目標\t押した\t差\t判定', ...rows].join('\n');
-  const done = () => { $('btnCopy').textContent = 'コピーしました'; setTimeout(() => { $('btnCopy').textContent = '記録をコピー'; }, 1500); };
+  const done = () => flashCopied($('btnCopy'));
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
   } else fallbackCopy(text, done);
+}
+// 結果をシェア：スマホなら共有の画面（LINE・X など）、出せなければ文章をコピーする
+function shareResult() {
+  if (!G || !G.res) return;
+  const r = G.res;
+  const text = 'はがしの達人で ' + G.score + '点！（' + condLabel() + '）\n' +
+    'ピッタリ ' + r.perfects + '/' + r.n + '・平均のずれ ' + sgn2(r.mean) + '秒\n' +
+    '担当：' + curIdol().name + '\n#はがしの達人';
+  const done = () => flashCopied($('btnShare'));
+  if (navigator.share) {
+    navigator.share({ text, url: SHARE_URL }).catch(() => { /* 閉じただけ */ });
+    return;
+  }
+  const all = text + '\n' + SHARE_URL;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(all).then(done, () => fallbackCopy(all, done));
+  } else fallbackCopy(all, done);
+}
+// ボタンの中身（アイコン）を一瞬「コピーしました」に替えて戻す
+function flashCopied(b) {
+  if (b.dataset.icon) return;
+  b.dataset.icon = b.innerHTML;
+  b.textContent = 'コピーしました';
+  setTimeout(() => { b.innerHTML = b.dataset.icon; delete b.dataset.icon; }, 1500);
 }
 function fallbackCopy(text, done) {
   const ta = document.createElement('textarea');
@@ -436,6 +488,7 @@ function fallbackCopy(text, done) {
 $('btnAgain').addEventListener('click', startGame);
 $('btnToTitle').addEventListener('click', () => { refreshTitle(); show('title'); });
 $('btnCopy').addEventListener('click', copyLog);
+$('btnShare').addEventListener('click', shareResult);
 
 // ===== タイミング調整 =====
 // 等速で近づく手が触れる瞬間に押してもらい、押した時刻とのずれの中央値を端末の遅れとみなす

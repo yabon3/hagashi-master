@@ -91,6 +91,7 @@ button.primary {
 .seg button small { font-size: 3cqw; color: var(--mute); }
 .seg button.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
 .wide { width: 100%; font-variant-numeric: tabular-nums; }
+.best-cond { text-align: center; font-size: 3.4cqw; color: var(--mute); margin-bottom: -2cqw; }
 .best { text-align: center; font-size: 4.2cqw; color: var(--mute); }
 .best b { color: var(--ink); font-size: 6cqw; margin-left: 2cqw; font-variant-numeric: tabular-nums; }
 .best .mini { margin-left: 3cqw; font-size: 3.2cqw; padding: 1cqw 2.5cqw; vertical-align: 0.6cqw; }
@@ -327,6 +328,7 @@ button.primary {
 /* ---------- 結果 ---------- */
 #result { gap: 2.5cqw; }
 .res-head { margin: 0; text-align: center; font-size: 6cqw; color: var(--accent); }
+.res-cond { text-align: center; font-size: 3.6cqw; color: var(--mute); margin-top: -2cqw; }
 .res-score { display: flex; align-items: baseline; justify-content: center; gap: 3cqw; }
 .res-score b { font-size: 12cqw; font-variant-numeric: tabular-nums; }
 .newbest { font-size: 3.4cqw; background: var(--gold); color: #fff; padding: 0.5cqw 2cqw; border-radius: 3cqw; font-weight: 700; }
@@ -335,7 +337,8 @@ button.primary {
 .res-grid b { font-size: 4.6cqw; font-variant-numeric: tabular-nums; }
 .res-idol { display: flex; align-items: center; gap: 3cqw; background: #fff; border-radius: 3cqw; padding: 2cqw 3cqw; }
 /* 結果画面は顔のアップだけ。3人の絵は共通の枠（art/make_idols.py）なので、顔の範囲も共通でよい。
-   元の絵（1024px）での顔の範囲：x 270〜750、y 170〜650 → 画像に対する割合に直して --d（丸の直径）から位置を出す */
+   img/idol-*.webp（幅480px）での顔の範囲：x 100〜380、y 90〜370 → 画像の幅に対する割合に直して --d（丸の直径）から位置を出す
+   （2026-10-23 に3人を入れ替えたとき測り直した） */
 .res-face {
   --d: 15.4cqw;
   position: relative;
@@ -351,9 +354,9 @@ button.primary {
 .res-face img {
   position: absolute;
   max-width: none;
-  width: calc(var(--d) / 0.46875);
-  left: calc(var(--d) * -0.5626);
-  top: calc(var(--d) * -0.300);
+  width: calc(var(--d) / 0.5833);
+  left: calc(var(--d) * -0.357);
+  top: calc(var(--d) * -0.321);
 }
 .res-who { display: flex; align-items: flex-start; gap: 1cqw; flex-shrink: 0; }
 .res-who .marks { position: static; font-size: 6cqw; animation: none; }
@@ -370,6 +373,9 @@ button.primary {
 /* C案のボタンは縁取りと影で上下にはみ出すので、段の間をあける */
 #result .row + .row { margin-top: 2.5cqw; }
 .row button { flex: 1; }
+/* 結果画面の下の段はアイコンだけ（名前は title と aria-label に持たせる） */
+.icon-row button { display: flex; align-items: center; justify-content: center; padding-left: 0; padding-right: 0; font-size: 3.4cqw; white-space: nowrap; }
+.icon-row svg { width: 7cqw; height: 7cqw; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---------- タイミング調整 ---------- */
 #calib { gap: 3cqw; cursor: pointer; }
