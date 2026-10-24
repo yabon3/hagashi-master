@@ -67,9 +67,12 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 保存できなくても続行 */ } },
 };
-const settings = Object.assign({ diff: 'easy', showWatch: true, offset: 0, idol: 'janako', bgm: true, sfx: true }, store.get('hagashi.settings', {}));
-Sound.set('bgm', settings.bgm);
-Sound.set('sfx', settings.sfx);
+// BGM・効果音は切った状態で始め、本人が入れたら保存する（2026-10-24）。
+// 最初の版（bgm / sfx）は入れたつもりがなくても true が保存されていたので、名前を変えて捨てる
+const settings = Object.assign({ diff: 'easy', showWatch: true, offset: 0, idol: 'janako', bgmOn: false, sfxOn: false }, store.get('hagashi.settings', {}));
+delete settings.bgm; delete settings.sfx;
+Sound.set('bgm', settings.bgmOn);
+Sound.set('sfx', settings.sfxOn);
 const curIdol = () => IDOLS.find((d) => d.id === settings.idol) || IDOLS[0];
 const saveSettings = () => store.set('hagashi.settings', settings);
 // ハイスコアは難易度×時計あり／なしで分ける（2026-10-23。人と比べるとき、時計ありが勝ってしまうため）。
@@ -117,8 +120,8 @@ function refreshTitle() {
   for (const b of $('segWatch').children) b.classList.toggle('on', (b.dataset.v === '1') === settings.showWatch);
   $('offsetLabel').textContent = (settings.offset >= 0 ? '+' : '−') + Math.abs(settings.offset / 1000).toFixed(3) + '秒';
   $('bestLabel').textContent = store.get(bestKey(), 0);
-  $('btnBgm').classList.toggle('mute', !settings.bgm);
-  $('btnSfx').classList.toggle('mute', !settings.sfx);
+  $('btnBgm').classList.toggle('mute', !settings.bgmOn);
+  $('btnSfx').classList.toggle('mute', !settings.sfxOn);
 }
 $('segDiff').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
@@ -130,13 +133,13 @@ $('segWatch').addEventListener('click', (e) => {
 });
 $('btnStart').addEventListener('click', openSelect);
 $('btnBgm').addEventListener('click', () => {
-  settings.bgm = !settings.bgm; saveSettings(); refreshTitle();
-  Sound.set('bgm', settings.bgm);
-  if (settings.bgm) Sound.bgmStart();
+  settings.bgmOn = !settings.bgmOn; saveSettings(); refreshTitle();
+  Sound.set('bgm', settings.bgmOn);
+  if (settings.bgmOn) Sound.bgmStart();
 });
 $('btnSfx').addEventListener('click', () => {
-  settings.sfx = !settings.sfx; saveSettings(); refreshTitle();
-  Sound.set('sfx', settings.sfx);
+  settings.sfxOn = !settings.sfxOn; saveSettings(); refreshTitle();
+  Sound.set('sfx', settings.sfxOn);
 });
 
 // ===== 担当アイドルを選ぶ =====

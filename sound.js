@@ -6,7 +6,7 @@
 // 握手が始まる瞬間にも音を出さない。Bluetooth イヤホンだと音が遅れ、数え始めがずれるため
 const Sound = (() => {
   let ac = null, sfxOut = null, bgmOut = null;
-  let enabled = { bgm: true, sfx: true };
+  let enabled = { bgm: false, sfx: false };
 
   const NOTE = (n) => { // 'C5' → Hz
     const m = /^([A-G])(#?)(\d)$/.exec(n);
