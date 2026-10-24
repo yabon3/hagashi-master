@@ -77,6 +77,10 @@ const Sound = (() => {
       const k = Math.pow(2, up / 12);
       bell(o, t, NOTE('E6') * k, 0.5, 0.22); bell(o, t + 0.11, NOTE('B6') * k, 0.7, 0.22);
     },
+    just: (o, t, up) => {                                                                      // ジャスト：ピンポン＋高いところでキラキラ
+      SFX.perfect(o, t, up);
+      ['E7', 'G7', 'C8', 'E8', 'G8'].forEach((n, i) => bell(o, t + 0.2 + i * 0.05, NOTE(n), 0.5, 0.07));
+    },
     good: (o, t) => tone(o, t, { f: 620, dur: 0.16, v: 0.3, type: 'triangle' }),              // ポッ
     bad: (o, t) => tone(o, t, { f: 700, f2: 160, dur: 0.5, glide: 0.45, v: 0.28, type: 'triangle', a: 0.01 }), // ヒュ〜ン
     timeout: (o, t) => {                                                                       // ブブー（長め）

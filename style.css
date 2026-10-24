@@ -257,6 +257,14 @@ button.primary {
 .jword.good { color: var(--good); }
 .jword.early { color: var(--gold); }
 .jword.late { color: var(--late); }
+/* ジャスト（±0.00）：金色に光らせ、大きく弾ませる。sw-word は transform で中央寄せしているので scale で動かす */
+.jword.just { color: #ff2f7d; text-shadow: 0 0 1.5cqw #ffd84d, 0 0 3.5cqw #ffd84d; animation: just-pop .55s ease-out; }
+.sw-word.just { border: 0.7cqw solid #f5b700; background: #fffbe6; }
+@keyframes just-pop { 0% { scale: 1.8; } 55% { scale: .92; } 100% { scale: 1; } }
+/* その人で入った点 */
+.pts { min-height: 1.2em; font-size: 7cqw; font-weight: 900; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; text-shadow: 0 0 0.8cqw #fff, 0 0 0.8cqw #fff; }
+.pts:empty { display: none; }
+.pts.just { font-size: 11cqw; color: #f5a300; text-shadow: 0 0 1cqw #fff, 0 0 2.5cqw #fff3b0; animation: just-pop .55s ease-out; }
 .watch {
   background: var(--ink);
   color: #fff;
@@ -371,6 +379,7 @@ button.primary {
 .res-table th { position: sticky; top: 0; background: #fff; color: var(--mute); font-weight: 400; padding: 1.2cqw; }
 .res-table td { text-align: center; padding: 1cqw; border-top: 0.2cqw solid var(--line); }
 .res-table td.perfect { color: var(--accent); font-weight: 700; }
+.res-table td.just { color: #f5a300; font-weight: 900; }
 .res-table td.good { color: var(--good); }
 .res-table td.early { color: var(--gold); }
 .res-table td.late { color: var(--late); }

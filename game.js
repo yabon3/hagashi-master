@@ -2,11 +2,15 @@
 
 // ===== 設定 =====
 // 判定の幅は秒数で固定。1秒でも10秒でも、ずれの大きさはほぼ同じだった（2026-09-27 の試し打ち）
+// mult＝点の倍率（2026-10-24）。目安：ノーマルで全員ピッタリ約5000、ほぼ0で20000／イージーの上手な人で10000前後／ハードの名人20000・達人30000
 const DIFFS = {
-  easy:   { tol: 0.15, name: 'イージー' },
-  normal: { tol: 0.10, name: 'ノーマル' },
-  hard:   { tol: 0.05, name: 'ハード' },
+  easy:   { tol: 0.15, name: 'イージー', mult: 0.8 },
+  normal: { tol: 0.10, name: 'ノーマル', mult: 1 },
+  hard:   { tol: 0.05, name: 'ハード',   mult: 1.8 },
 };
+// 点：ずれ（画面と同じ0.01秒刻み）で決める。±0.00 は「ジャスト」で別格、±0.01 から 0.01秒ごとに 0.65倍
+const PTS_JUST = 2000, PTS_TOP = 600, PTS_DECAY = 0.65;
+const COMBO_BONUS = 0.15; // それまでのピッタリの連続1回につき +15%（ピッタリのときだけ）
 const SHARE_URL = 'https://yabon3.github.io/hagashi-master/';
 const REGULAR = [1, 1, 2, 2, 3, 3, 4, 4, 5]; // 並びは毎回シャッフル。合計は固定（太客と合わせて10人）
 const BOSS = 10;                                             // 最後の1人（太客）
@@ -76,8 +80,11 @@ Sound.set('sfx', settings.sfxOn);
 const curIdol = () => IDOLS.find((d) => d.id === settings.idol) || IDOLS[0];
 const saveSettings = () => store.set('hagashi.settings', settings);
 // ハイスコアは難易度×時計あり／なしで分ける（2026-10-23。人と比べるとき、時計ありが勝ってしまうため）。
-// 分ける前の記録は時計ありのキーに残す（当時の既定は時計あり）
-const bestKey = () => 'hagashi.best.' + settings.diff + (settings.showWatch ? '' : '.nowatch');
+// 2026-10-24 に点の付け方を変えたので記録を取り直す（前の点とは比べられない。古い記録は消す）
+const bestKey = () => 'hagashi.score.' + settings.diff + (settings.showWatch ? '' : '.nowatch');
+for (const d of Object.keys(DIFFS)) for (const w of ['', '.nowatch']) {
+  try { localStorage.removeItem('hagashi.best.' + d + w); } catch (e) { /* 消せなくても続行 */ }
+}
 const condLabel = () => DIFFS[settings.diff].name + '・時計' + (settings.showWatch ? 'あり' : 'なし');
 
 // ===== 小道具 =====
@@ -317,7 +324,8 @@ function drawClock(sec) {
 function judge(target, elapsed) {
   const tol = DIFFS[settings.diff].tol;
   const err = elapsed - target;
-  const a = Math.abs(err);
+  // 画面に出す数字（小数2桁）で判定する。そのままだと −0.15 と出ているのに 0.150000…02 で範囲外になることがあった
+  const a = +Math.abs(err).toFixed(2);
   if (a <= tol) return { rank: 'perfect', err, tol };
   if (a <= tol * 2.5) return { rank: err < 0 ? 'goodEarly' : 'goodLate', err, tol };
   return { rank: err < 0 ? 'badEarly' : 'badLate', err, tol };
@@ -337,23 +345,29 @@ function resolve(pressTime) {
     j = judge(target, elapsed);
   }
 
+  // ずれは画面に出す数字（小数2桁）と同じ刻みで数える。画面が ±0.00 ならジャスト
+  const hund = elapsed === null ? null : Math.round(Math.abs(j.err).toFixed(2) * 100);
+  const just = hund === 0;
   let pts = 0, word, cls, idolLine = null, fanLine = null;
+  if (hund !== null) {
+    const base = just ? PTS_JUST : PTS_TOP * Math.pow(PTS_DECAY, hund - 1);
+    pts = Math.round(base * DIFFS[settings.diff].mult * (j.rank === 'perfect' ? 1 + COMBO_BONUS * combo0 : 1) * mult);
+  }
   const d = curIdol();
   const up = (v) => Math.round(v * d.up), down = (v) => Math.round(v * d.down);
   switch (j.rank) {
     case 'perfect':
-      pts = (100 + Math.round(50 * (1 - Math.abs(j.err) / j.tol)) + G.combo * 10) * mult;
       G.combo++;
       G.idol += up(6); G.fan += 6;
-      word = 'ピッタリ！'; cls = 'perfect';
+      word = just ? 'ジャスト！' : 'ピッタリ！'; cls = just ? 'just' : 'perfect';
       if (Math.random() < 0.5) fanLine = pick(LINES.perfectFan); else idolLine = pick(d.lines.perfect);
       break;
     case 'goodEarly':
-      pts = 40 * mult; G.combo = 0; G.fan -= 5;
+      G.combo = 0; G.fan -= 5;
       word = 'ちょい早'; cls = 'early'; fanLine = pick(LINES.goodEarly);
       break;
     case 'goodLate':
-      pts = 40 * mult; G.combo = 0; G.idol -= down(5);
+      G.combo = 0; G.idol -= down(5);
       word = 'ちょい遅'; cls = 'late'; idolLine = pick(d.lines.goodLate);
       break;
     case 'badEarly':
@@ -377,7 +391,7 @@ function resolve(pressTime) {
 
   // 音：押した音 → 判定 → 本音が変わったら少し遅れて
   if (pressTime !== null) Sound.play('press');
-  if (j.rank === 'perfect') Sound.play('perfect', { delay: 0.04, up: Math.min(combo0, 12) }); // 連続で半音ずつ上がる
+  if (j.rank === 'perfect') Sound.play(just ? 'just' : 'perfect', { delay: 0.04, up: Math.min(combo0, 12) }); // 連続で半音ずつ上がる
   else Sound.play({ goodEarly: 'good', goodLate: 'good', badEarly: 'bad', badLate: 'bad', timeout: 'timeout' }[j.rank], { delay: 0.04 });
   const marks1 = idolMarks(G.idol);
   if (MARK_ORDER.indexOf(marks1) > MARK_ORDER.indexOf(marks0)) Sound.play('angry', { delay: 0.35 });
@@ -389,6 +403,7 @@ function resolve(pressTime) {
     $('swWord').textContent = word;
     $('swWord').className = 'sw-word jword ' + cls;
     $('swDiff').textContent = '/ ' + f2(target) + (elapsed === null ? '' : '  ' + sgn2(j.err));
+    showPts($('swPts'), elapsed === null ? null : pts, just);
   } else {
     const jw = $('jword');
     jw.textContent = word;
@@ -396,6 +411,7 @@ function resolve(pressTime) {
     $('watchMain').textContent = elapsed === null ? '--.--' : f2(elapsed);
     $('watchTarget').textContent = '/ ' + f2(target);
     $('watchDiff').textContent = elapsed === null ? '' : sgn2(j.err);
+    showPts($('jPts'), elapsed === null ? null : pts, just);
     $('judge').classList.remove('hidden');
   }
 
@@ -410,6 +426,12 @@ function resolve(pressTime) {
   G.leaving = false;
   G.t = performance.now();
   updateHud();
+}
+
+// その人で入った点。ジャストは大きく金色で
+function showPts(el, pts, just) {
+  el.textContent = pts === null ? '' : '+' + pts.toLocaleString();
+  el.className = 'pts' + (just ? ' just' : '');
 }
 
 // 顔はいつも笑顔。本音は顔の横のマークで出す
