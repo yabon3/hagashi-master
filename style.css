@@ -91,12 +91,17 @@ button.primary {
 .seg button small { font-size: 3cqw; color: var(--mute); }
 .seg button.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
 .wide { width: 100%; font-variant-numeric: tabular-nums; }
-.best-cond { text-align: center; font-size: 3.4cqw; color: var(--mute); margin-bottom: -2cqw; }
 .best { text-align: center; font-size: 4.2cqw; color: var(--mute); }
 .best b { color: var(--ink); font-size: 6cqw; margin-left: 2cqw; font-variant-numeric: tabular-nums; }
 .best .mini { margin-left: 3cqw; font-size: 3.2cqw; padding: 1cqw 2.5cqw; vertical-align: 0.6cqw; }
 #btnStart { font-size: 6cqw; padding: 3.5cqw; }
-.ops { text-align: center; color: var(--mute); font-size: 3.4cqw; }
+/* BGM・効果音の切り替え（右上に縦に2つ）。切ると斜線 */
+.snd-icons { position: absolute; top: 3cqw; right: 3cqw; display: flex; flex-direction: column; gap: 2.5cqw; z-index: 2; }
+.snd-icons button { width: 10cqw; height: 10cqw; padding: 0; display: grid; place-items: center; }
+.snd-icons svg { width: 6.5cqw; height: 6.5cqw; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.snd-icons .off { display: none; }
+.snd-icons button.mute { color: var(--mute); }
+.snd-icons button.mute .off { display: inline; }
 
 /* ---------- プレイ ---------- */
 #play { padding: 3cqw 4cqw 4cqw; gap: 2cqw; cursor: pointer; }

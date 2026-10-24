@@ -67,7 +67,9 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 保存できなくても続行 */ } },
 };
-const settings = Object.assign({ diff: 'easy', showWatch: true, offset: 0, idol: 'janako' }, store.get('hagashi.settings', {}));
+const settings = Object.assign({ diff: 'easy', showWatch: true, offset: 0, idol: 'janako', bgm: true, sfx: true }, store.get('hagashi.settings', {}));
+Sound.set('bgm', settings.bgm);
+Sound.set('sfx', settings.sfx);
 const curIdol = () => IDOLS.find((d) => d.id === settings.idol) || IDOLS[0];
 const saveSettings = () => store.set('hagashi.settings', settings);
 // ハイスコアは難易度×時計あり／なしで分ける（2026-10-23。人と比べるとき、時計ありが勝ってしまうため）。
@@ -103,6 +105,9 @@ function show(id) {
   for (const s of document.querySelectorAll('.screen')) s.classList.toggle('hidden', s.id !== id);
   current = id;
   if (document.activeElement) document.activeElement.blur();
+  // BGM はタイトルとアイドル選択と結果だけ（結果は finish でジングルのあとに始める）
+  if (id === 'title' || id === 'select') Sound.bgmStart();
+  else if (id !== 'result') Sound.bgmStop();
 }
 let current = 'title';
 
@@ -112,7 +117,8 @@ function refreshTitle() {
   for (const b of $('segWatch').children) b.classList.toggle('on', (b.dataset.v === '1') === settings.showWatch);
   $('offsetLabel').textContent = (settings.offset >= 0 ? '+' : '−') + Math.abs(settings.offset / 1000).toFixed(3) + '秒';
   $('bestLabel').textContent = store.get(bestKey(), 0);
-  $('bestCond').textContent = condLabel();
+  $('btnBgm').classList.toggle('mute', !settings.bgm);
+  $('btnSfx').classList.toggle('mute', !settings.sfx);
 }
 $('segDiff').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
@@ -123,6 +129,15 @@ $('segWatch').addEventListener('click', (e) => {
   settings.showWatch = b.dataset.v === '1'; saveSettings(); refreshTitle();
 });
 $('btnStart').addEventListener('click', openSelect);
+$('btnBgm').addEventListener('click', () => {
+  settings.bgm = !settings.bgm; saveSettings(); refreshTitle();
+  Sound.set('bgm', settings.bgm);
+  if (settings.bgm) Sound.bgmStart();
+});
+$('btnSfx').addEventListener('click', () => {
+  settings.sfx = !settings.sfx; saveSettings(); refreshTitle();
+  Sound.set('sfx', settings.sfx);
+});
 
 // ===== 担当アイドルを選ぶ =====
 function openSelect() {
@@ -208,6 +223,7 @@ function nextFan(now) {
   G.phase = 'enter';
   G.t = now;
   updateHud();
+  Sound.play('enter');
 }
 
 function loop(now) {
@@ -223,6 +239,7 @@ function loop(now) {
     if (now - G.t >= T_APPROACH) {
       G.t0 = G.t + T_APPROACH; // 握手が始まった瞬間（画面の予定時刻）
       G.phase = 'hold';
+      G.tick = 0;
       $('fanHand').classList.add('hidden');
       $('idolHand').classList.add('hidden');
       $('shake').classList.remove('hidden');
@@ -236,7 +253,12 @@ function loop(now) {
     }
   } else if (G.phase === 'hold') {
     // 判定と同じくタイミング調整ぶんを引く。引かないと、押して止めた瞬間に針が調整ぶん跳び戻る
-    if (settings.showWatch) drawClock(Math.max(0, (now - G.t0 - settings.offset) / 1000));
+    if (settings.showWatch) {
+      drawClock(Math.max(0, (now - G.t0 - settings.offset) / 1000));
+      // 針が12時を通る時刻に鳴らす。1コマ遅れないよう、少し前に予約する
+      const next = G.t0 + settings.offset + (G.tick + 1) * 1000;
+      if (next - now < 80) { Sound.play('tick', { at: next }); G.tick++; }
+    }
     const target = G.seq[G.i];
     const limit = (target + Math.max(1.5, target * 0.5)) * 1000;
     if (now - G.t0 - settings.offset > limit) resolve(null);
@@ -302,6 +324,7 @@ function resolve(pressTime) {
   const target = G.seq[G.i];
   const boss = G.i === G.seq.length - 1;
   const mult = boss ? 3 : 1;
+  const combo0 = G.combo, marks0 = idolMarks(G.idol);
   let elapsed = null, j;
 
   if (pressTime === null) {
@@ -349,6 +372,14 @@ function resolve(pressTime) {
   G.score += pts;
   G.log.push({ n: G.i + 1, target, elapsed, err: j.err, rank: j.rank, word, cls });
 
+  // 音：押した音 → 判定 → 本音が変わったら少し遅れて
+  if (pressTime !== null) Sound.play('press');
+  if (j.rank === 'perfect') Sound.play('perfect', { delay: 0.04, up: Math.min(combo0, 12) }); // 連続で半音ずつ上がる
+  else Sound.play({ goodEarly: 'good', goodLate: 'good', badEarly: 'bad', badLate: 'bad', timeout: 'timeout' }[j.rank], { delay: 0.04 });
+  const marks1 = idolMarks(G.idol);
+  if (MARK_ORDER.indexOf(marks1) > MARK_ORDER.indexOf(marks0)) Sound.play('angry', { delay: 0.35 });
+  else if (marks1 === '💕' && marks0 !== '💕') Sound.play('love', { delay: 0.35 });
+
   // 判定表示。時計ありなら時計を止めて答え合わせ、なしなら判定の文字と黒い四角
   if (settings.showWatch) {
     if (elapsed !== null) drawClock(elapsed);
@@ -379,6 +410,7 @@ function resolve(pressTime) {
 }
 
 // 顔はいつも笑顔。本音は顔の横のマークで出す
+const MARK_ORDER = ['💕', '', '💦', '💢', '💢💢']; // 良い順
 function idolMarks(m) {
   if (m >= 85) return '💕';
   if (m >= 65) return '';
@@ -441,6 +473,9 @@ function finish() {
   ).join('');
 
   show('result');
+  Sound.play('finish');
+  if (isNew) Sound.play('best', { delay: 1.3 });
+  Sound.bgmStart(2.6);
 }
 
 function copyLog() {
@@ -558,6 +593,17 @@ window.addEventListener('keydown', (e) => {
   e.preventDefault();
   if (!e.repeat) press(eventTime(e));
 });
+
+// ブラウザは画面に触れるまで音を出させない。触れたら音を起こし、タイトルなら BGM を始める
+// （BGM のアイコンを押したときは、そのボタンの処理に任せる。切るつもりの BGM が一瞬鳴るのを避ける）
+for (const type of ['pointerdown', 'keydown', 'touchend']) {
+  window.addEventListener(type, (e) => {
+    Sound.unlock();
+    if ((current === 'title' || current === 'select') && !(e.target.closest && e.target.closest('#btnBgm'))) Sound.bgmStart();
+  }, true);
+}
+// 画面のボタンを押した音（効果音を切った直後のアイコンは、もう鳴らない）
+document.addEventListener('click', (e) => { if (e.target.closest('button')) Sound.play('ui'); });
 
 refreshTitle();
 
