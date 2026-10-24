@@ -148,7 +148,7 @@ button.primary {
 .marks {
   position: absolute;
   top: 0;
-  left: -9cqw;  /* 右はアイドルの台詞が出るので左に置く */
+  right: -9cqw;  /* 左はアイドルの台詞が出るので右に置く（2026-10-24 に左右を入れ替え） */
   font-family: var(--emoji);
   font-size: 10cqw;
   line-height: 1;
@@ -225,7 +225,7 @@ button.primary {
   line-height: 1.35;
 }
 /* 台詞は話す人の横。しっぽを話す人の側に出す */
-.idol-bubble { top: 5%; left: calc(50% + 19cqw); right: 2%; }
+.idol-bubble { top: 5%; right: calc(50% + 19cqw); left: 2%; }
 .who { position: relative; }
 .fan-bubble { bottom: 25%; right: calc(100% + 2.5cqw); width: max-content; max-width: 36cqw; }
 .bubble::after {
@@ -239,7 +239,7 @@ button.primary {
   border-width: 0 0 0.5cqw 0.5cqw;
   transform: translateY(-50%) rotate(45deg);
 }
-.idol-bubble::after { left: -1.5cqw; }
+.idol-bubble::after,
 .fan-bubble::after { right: -1.5cqw; transform: translateY(-50%) rotate(-135deg); }
 
 .judge {
